@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профиль — KOSAGO.RU</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 620px;
+        }
+        h1 { margin: 0 0 0.5rem; color: #333; }
+        .welcome { color: #0066ff; font-size: 1.1rem; margin-bottom: 2rem; }
+        
+        .feedback-section {
+            background: #f8f9fa;
+            padding: 1.8rem;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+            margin-top: 2rem;
+        }
+        .feedback-section h2 {
+            margin: 0 0 1rem 0;
+            color: #333;
+        }
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+        textarea.form-input { resize: vertical; min-height: 140px; }
+        
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #0066ff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.05rem;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover { background: #0055dd; }
+        
+        .messages {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 1.2rem;
+        }
+        .success { background: #e6ffed; color: #006600; }
+        .error   { background: #ffebee; color: #c62828; }
+        
+        .logout { color: #666; text-decoration: none; }
+        .logout:hover { color: #c62828; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Привет, {{ user.username }}!</h1>
+    <p class="welcome">Добро пожаловать в личный кабинет KOSAGO.RU</p>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="messages {% if message.tags == 'success' %}success{% else %}error{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="feedback-section">
+        <h2>Предложения по улучшению проекта</h2>
+        <p>Расскажите, что можно улучшить, добавить или изменить в KOSAGO.RU.<br>Ваше мнение очень важно!</p>
+        
+        <form method="post">
+            {% csrf_token %}
+            {{ feedback_form.as_p }}
+            <button type="submit" name="feedback">Отправить предложение</button>
+        </form>
+    </div>
+
+    <p style="text-align: center; margin-top: 2rem;">
+        <a href="{% url 'logout' %}" class="logout">Выйти из аккаунта</a>
+    </p>
+</div>
+
+</body>
+</html>
