@@ -159,10 +159,15 @@ USE_I18N = True
 USE_TZ = True
 
 
+# Default primary key field type
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 
 LOGIN_REDIRECT_URL = "/profile/"  # куда отправлять после входа
@@ -172,7 +177,7 @@ LOGIN_URL = "/"  # страница логина
 # если хотите — можно сразу после регистрации логинить пользователя
 # ACCOUNT_EMAIL_VERIFICATION = 'none'   (если будете ставить django-allauth)
 
-# ================= с =================
+# Email settings
 
 EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
 
@@ -188,3 +193,15 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
 
 # Адрес электронной почты получателя обратной связи
 FEEDBACK_RECIPIENT_EMAIL = os.getenv('FEEDBACK_RECIPIENT_EMAIL', EMAIL_HOST_USER)
+
+
+# Security settings (enabled in production when DEBUG=False)
+if not DEBUG:
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True

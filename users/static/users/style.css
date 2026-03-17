@@ -1,0 +1,136 @@
+body {
+    font-family: system-ui, sans-serif;
+    background: #f0f2f5;
+    margin: 0;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 420px;
+}
+
+.container--wide {
+    max-width: 620px;
+}
+
+h1 { margin: 0 0 0.5rem; color: #333; }
+h2 { margin: 0 0 1.5rem; text-align: center; color: #333; }
+
+.welcome {
+    color: #0066ff;
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    margin-bottom: 1.8rem;
+    border-bottom: 2px solid #eee;
+}
+.tab {
+    flex: 1;
+    text-align: center;
+    padding: 0.9rem;
+    cursor: pointer;
+    font-weight: 500;
+    color: #666;
+    transition: all 0.2s;
+}
+.tab.active {
+    color: #0066ff;
+    border-bottom: 3px solid #0066ff;
+}
+
+/* Form containers */
+.form-container {
+    display: none;
+}
+.form-container.active {
+    display: block;
+}
+
+/* Inputs */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+.form-input {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 1rem;
+}
+
+textarea.form-input {
+    resize: vertical;
+    min-height: 140px;
+    margin: 8px 0 15px;
+}
+
+/* Buttons */
+button {
+    width: 100%;
+    padding: 12px;
+    background: #0066ff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1.05rem;
+    cursor: pointer;
+    margin-top: 12px;
+    transition: background 0.2s;
+}
+button:hover {
+    background: #0055dd;
+}
+
+/* Messages */
+.messages {
+    margin-bottom: 1rem;
+    padding: 10px;
+    border-radius: 6px;
+}
+.success { background: #e6ffed; color: #006600; }
+.error   { background: #ffebee; color: #c62828; }
+
+/* Feedback section */
+.feedback-section {
+    background: #f8f9fa;
+    padding: 1.8rem;
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
+    margin-top: 2rem;
+}
+.feedback-section h2 {
+    margin: 0 0 1rem 0;
+    text-align: left;
+}
+
+/* Logout */
+.logout-btn {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: 1rem;
+    padding: 0;
+    margin-top: 0;
+    width: auto;
+}
+.logout-btn:hover {
+    color: #c62828;
+    background: none;
+}
