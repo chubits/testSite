@@ -19,6 +19,19 @@ class RegisterForm(UserCreationForm):
         self.fields["email"].label = "Электронная почта"
         self.fields["password1"].label = "Пароль"
         self.fields["password2"].label = "Подтверждение пароля"
+        self.fields["username"].help_text = (
+            "Обязательное поле. Не более 150 символов. "
+            "Только буквы, цифры и символы @/./+/-/_."
+        )
+        self.fields["password1"].help_text = (
+            "<ul>"
+            "<li>Пароль не должен быть слишком похож на другую личную информацию.</li>"
+            "<li>Пароль должен содержать как минимум 8 символов.</li>"
+            "<li>Пароль не должен быть слишком простым и распространённым.</li>"
+            "<li>Пароль не может состоять только из цифр.</li>"
+            "</ul>"
+        )
+        self.fields["password2"].help_text = "Введите пароль ещё раз для подтверждения."
         self.fields["username"].widget.attrs.update({"placeholder": "Логин"})
         self.fields["email"].widget.attrs.update({"placeholder": "Email"})
         self.fields["password1"].widget.attrs.update({"placeholder": "Пароль"})
