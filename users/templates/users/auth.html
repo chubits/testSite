@@ -1,88 +1,8 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Вход / Регистрация</title>
-  <style>
-    body {
-      font-family: system-ui, sans-serif;
-      background: #f0f2f5;
-      margin: 0;
-      padding: 20px;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    .container {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-      padding: 2.5rem;
-      width: 100%;
-      max-width: 420px;
-    }
-    h2 { margin: 0 0 1.5rem; text-align: center; color: #333; }
-    .tabs {
-      display: flex;
-      margin-bottom: 1.8rem;
-      border-bottom: 2px solid #eee;
-    }
-    .tab {
-      flex: 1;
-      text-align: center;
-      padding: 0.9rem;
-      cursor: pointer;
-      font-weight: 500;
-      color: #666;
-      transition: all 0.2s;
-    }
-    .tab.active {
-      color: #0066ff;
-      border-bottom: 3px solid #0066ff;
-    }
-    .form-container {
-      display: none;
-    }
-    .form-container.active {
-      display: block;
-    }
-    input[type="text"], input[type="email"], input[type="password"] {
-      width: 100%;
-      padding: 12px;
-      margin: 8px 0;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      box-sizing: border-box;
-      font-size: 1rem;
-    }
-    button {
-      width: 100%;
-      padding: 12px;
-      background: #0066ff;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 1.05rem;
-      cursor: pointer;
-      margin-top: 12px;
-      transition: background 0.2s;
-    }
-    button:hover {
-      background: #0055dd;
-    }
-    .messages {
-      margin-bottom: 1rem;
-      padding: 10px;
-      border-radius: 6px;
-    }
-    .success { background: #e6ffed; color: #006600; }
-    .error   { background: #ffebee; color: #c62828; }
-  </style>
-</head>
-<body>
+{% extends 'users/base.html' %}
 
+{% block title %}Вход / Регистрация{% endblock %}
+
+{% block body %}
 <div class="container">
   <h2>KOSAGO.RU</h2>
   <h2>Добро пожаловать</h2>
@@ -116,18 +36,18 @@
     </form>
   </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
   document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.form-container').forEach(f => f.classList.remove('active'));
-      
+
       tab.classList.add('active');
       document.getElementById(tab.dataset.tab).classList.add('active');
     });
   });
 </script>
-
-</body>
-</html>
+{% endblock %}
