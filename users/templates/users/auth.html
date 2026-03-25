@@ -1,4 +1,6 @@
+
 {% extends 'users/base.html' %}
+{% load static %}
 
 {% block title %}Вход / Регистрация{% endblock %}
 
@@ -23,6 +25,9 @@
   <div class="form-container active" id="login">
     <form method="post">
       {% csrf_token %}
+      {% if login_form.non_field_errors %}
+        <div class="form-errors">{{ login_form.non_field_errors }}</div>
+      {% endif %}
       {{ login_form.as_p }}
       <button type="submit" name="login">Войти</button>
     </form>
@@ -31,11 +36,15 @@
   <div class="form-container" id="register">
     <form method="post">
       {% csrf_token %}
+      {% if register_form.non_field_errors %}
+        <div class="form-errors">{{ register_form.non_field_errors }}</div>
+      {% endif %}
       {{ register_form.as_p }}
       <button type="submit" name="register">Зарегистрироваться</button>
     </form>
   </div>
 </div>
+
 {% endblock %}
 
 {% block extra_js %}

@@ -7,11 +7,17 @@
   <title>{% block title %}KOSAGO.RU{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'users/style.css' %}">
   {% block extra_css %}{% endblock %}
-</head>
 <body>
 
-{% block body %}{% endblock %}
 
-{% block extra_js %}{% endblock %}
+  <div class="main-bg">
+    <div class="main-bg__img"></div>
+    <div class="main-bg__overlay"></div>
+    <div class="main-bg__content">
+      {% block body %}{% endblock %}
+    </div>
+  </div>
+
+  {% block extra_js %}{% endblock %}
 </body>
 </html>
