@@ -1,28 +1,29 @@
-
 {% extends 'users/base.html' %}
-{% load static %}
-
-{% block title %}Вход / Регистрация{% endblock %}
 
 {% block body %}
-<div class="container">
-  <h2>KOSAGO.RU</h2>
-  <h2>Добро пожаловать</h2>
 
-  {% if messages %}
-    {% for message in messages %}
-      <div class="messages {% if message.tags == 'success' %}success{% else %}error{% endif %}">
-        {{ message }}
-      </div>
-    {% endfor %}
-  {% endif %}
+{% if messages %}
+  {% for message in messages %}
+    <div class="messages {% if message.tags == 'success' %}success{% else %}error{% endif %}">
+      {{ message }}
+    </div>
+  {% endfor %}
+{% endif %}
 
-  <div class="tabs">
-    <div class="tab active" data-tab="login">Вход</div>
-    <div class="tab" data-tab="register">Регистрация</div>
-  </div>
-
-  <div class="form-container active" id="login">
+<!-- Модальное окно для входа -->
+<div id="login-modal" class="modal-auth">
+  <div class="modal-content">
+    <span class="close-modal" data-modal="login-modal">&times;</span>
+    <h2 style="margin:0 0 10px 0; font-size:1.35rem; color:#222; text-align:center; font-weight:700;">Вход</h2>
+    <div style="font-size:1.7rem;font-weight:700;color:#e53935;margin-bottom:2px;letter-spacing:1px;">KOSAGO.RU</div>
+    <div class="login-greeting" style="margin-bottom: 16px; color: #444; font-size: 1.08rem;">Добро пожаловать</div>
+    {% if messages %}
+      {% for message in messages %}
+        <div class="messages {% if message.tags == 'success' %}success{% else %}error{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
     <form method="post">
       {% csrf_token %}
       {% if login_form.non_field_errors %}
@@ -30,33 +31,115 @@
       {% endif %}
       {{ login_form.as_p }}
       <button type="submit" name="login">Войти</button>
+      <a class="password-reset-link" href="{% url 'password_reset' %}">Забыли пароль?</a>
     </form>
   </div>
+</div>
 
-  <div class="form-container" id="register">
-    <form method="post">
+<!-- Модальное окно для регистрации -->
+<div id="register-modal" class="modal-auth">
+  <div class="modal-content">
+    <span class="close-modal" data-modal="register-modal">&times;</span>
+    <h2 style="margin:0 0 10px 0; font-size:1.35rem; color:#222; text-align:center; font-weight:700;">Регистрация</h2>
+    <div style="font-size:1.7rem;font-weight:700;color:#e53935;margin-bottom:2px;letter-spacing:1px; text-align:left;">KOSAGO.RU</div>
+    <div class="login-greeting" style="margin-bottom: 16px; color: #444; font-size: 1.08rem; text-align:left;">Добро пожаловать</div>
+    {% if messages %}
+      {% for message in messages %}
+        <div class="messages {% if message.tags == 'success' %}success{% else %}error{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+    <form method="post" id="register-form">
       {% csrf_token %}
       {% if register_form.non_field_errors %}
         <div class="form-errors">{{ register_form.non_field_errors }}</div>
       {% endif %}
       {{ register_form.as_p }}
+      <div id="password-match-message" style="margin-bottom:10px;font-size:0.98rem;"></div>
       <button type="submit" name="register">Зарегистрироваться</button>
     </form>
   </div>
-</div>
 
 {% endblock %}
 
 {% block extra_js %}
 <script>
-  document.querySelectorAll('.tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.form-container').forEach(f => f.classList.remove('active'));
-
-      tab.classList.add('active');
-      document.getElementById(tab.dataset.tab).classList.add('active');
+  document.addEventListener('DOMContentLoaded', function() {
+    function closeAllModals() {
+      document.querySelectorAll('.modal-auth').forEach(function(modal) {
+        modal.style.display = 'none';
+      });
+    }
+    function openModal(id) {
+      closeAllModals();
+      document.getElementById(id).style.display = 'block';
+    }
+    function closeModal(id) {
+      document.getElementById(id).style.display = 'none';
+      // Показываем dev-warning при закрытии модалки, если блок есть
+      var devWarn = document.getElementById('dev-warning-center');
+      if (devWarn) devWarn.style.display = '';
+    }
+    // Кнопки в header (первая — вход, вторая — регистрация)
+    const authBtns = document.querySelectorAll('.header-auth-buttons .auth-btn');
+    if (authBtns.length > 1) {
+      authBtns[0].addEventListener('click', function(e) {
+        e.preventDefault();
+        openModal('login-modal');
+        var devWarn = document.getElementById('dev-warning-center');
+        if (devWarn) devWarn.style.display = 'none';
+      });
+      authBtns[1].addEventListener('click', function(e) {
+        e.preventDefault();
+        openModal('register-modal');
+        var devWarn = document.getElementById('dev-warning-center');
+        if (devWarn) devWarn.style.display = 'none';
+      });
+    }
+    // Крестики закрытия
+    document.querySelectorAll('.close-modal').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        closeModal(btn.dataset.modal);
+      });
     });
+    // Клик вне модального окна
+    window.onclick = function(event) {
+      document.querySelectorAll('.modal-auth').forEach(function(modal) {
+        if (event.target === modal) {
+          modal.style.display = 'none';
+          // Показываем dev-warning при закрытии модалки, если блок есть
+          var devWarn = document.getElementById('dev-warning-center');
+          if (devWarn) devWarn.style.display = '';
+        }
+      });
+    };
+    // Автоматически открыть модальное окно при ошибке входа или регистрации
+    {% if show_login_modal %}openModal('login-modal');{% endif %}
+    {% if show_register_modal %}openModal('register-modal');{% endif %}
+    // Индикация совпадения паролей
+    const regForm = document.getElementById('register-form');
+    if (regForm) {
+      const password1 = regForm.querySelector('input[name="password1"]');
+      const password2 = regForm.querySelector('input[name="password2"]');
+      const msg = document.getElementById('password-match-message');
+      if (password1 && password2 && msg) {
+        function checkPasswords() {
+          if (!password2.value) {
+            msg.textContent = '';
+            msg.style.color = '';
+          } else if (password1.value === password2.value) {
+            msg.textContent = 'Пароли совпадают';
+            msg.style.color = '#006600';
+          } else {
+            msg.textContent = 'Пароли не совпадают';
+            msg.style.color = '#e53935';
+          }
+        }
+        password1.addEventListener('input', checkPasswords);
+        password2.addEventListener('input', checkPasswords);
+      }
+    }
   });
 </script>
 {% endblock %}

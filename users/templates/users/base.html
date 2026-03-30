@@ -5,19 +5,106 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}KOSAGO.RU{% endblock %}</title>
+  <link rel="preload" as="image" href="{% static 'users/img/main_photo.jpg' %}" type="image/jpeg">
   <link rel="stylesheet" href="{% static 'users/style.css' %}">
   {% block extra_css %}{% endblock %}
 <body>
+  <div id="cookie-warning" class="cookie-warning" style="display:none;">
+    <span>Мы используем файлы cookie для улучшения работы сайта. Продолжая пользоваться сайтом, вы соглашаетесь с использованием cookie.</span>
+    <button id="cookie-accept-btn" class="cookie-accept-btn">Понятно</button>
+  </div>
 
+  <div class="header-bar">
+    <div class="site-logo"><a href="/">KOSAGO.RU</a></div>
+    <div class="header-auth-buttons">
+    {% if not user.is_authenticated %}
+      <a href="{% url 'auth' %}" class="auth-btn">Вход</a>
+      <a href="{% url 'auth' %}#register" class="auth-btn">Регистрация</a>
+    {% else %}
+      <a href="{% url 'profile' %}" class="auth-btn">Профиль</a>
+      <form method="post" action="{% url 'logout' %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="auth-btn logout-btn">Выйти</button>
+      </form>
+    {% endif %}
+  </div>
 
+  </div>
   <div class="main-bg">
-    <div class="main-bg__img"></div>
+    <div class="main-bg__img" id="main-bg-img"></div>
     <div class="main-bg__overlay"></div>
     <div class="main-bg__content">
+      {% if not user.is_authenticated %}
+      <div class="dev-warning-center" id="dev-warning-center">
+        <div class="dev-warning-title">KOSAGO.RU</div>
+        <div class="dev-warning-text">Сайт находится в разработке.<br>Некоторые функции могут быть недоступны.</div>
+      </div>
+      {% endif %}
       {% block body %}{% endblock %}
     </div>
   </div>
 
-  {% block extra_js %}{% endblock %}
+  <footer class="site-footer">
+    <div class="footer-content">
+      <span class="footer-copyright">&copy; {{ now|default:2026 }} KOSAGO.RU — Все права защищены</span>
+      <span class="footer-socials">
+        <a href="#" class="footer-social-link" title="VK" aria-label="VK"><svg width="26" height="26" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="16" fill="#ececec"/><path d="M17.7 22c-5.1 0-8-3.5-8.1-9.5h2.6c0 4.2 1.9 6 3.2 6.3v-6.3h2.3v3.6c1.3-.1 2.7-1.7 3.2-3.6h2.4c-.3 1.7-1.7 3.5-2.7 4.2 1 .4 2.5 1.7 3.1 4.3h-2.5c-.4-1.3-1.3-2.3-2.9-2.4v2.4h-2.3v-2.4c-1.6.1-2.5 1.1-2.9 2.4h-2.5c.6-2.6 2.1-3.9 3.1-4.3-1-.7-2.4-2.5-2.7-4.2h2.4c.5 1.9 1.9 3.5 3.2 3.6v-3.6h2.3v6.3c1.3-.3 3.2-2.1 3.2-6.3h2.6c-.1 6-3 9.5-8.1 9.5z" fill="#888"/></svg></a>
+        <a href="#" class="footer-social-link" title="Telegram" aria-label="Telegram"><svg width="26" height="26" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="16" fill="#ececec"/><path d="M23.7 10.2l-2.6 12.2c-.2.8-.7 1-1.4.6l-3.8-2.8-1.8 1.7c-.2.2-.3.3-.7.3l.2-2.2 8.1-7.3c.3-.3-.1-.5-.5-.3l-10 6.3-2.1-.7c-.8-.3-.8-.8.2-1.1l13.1-5c.6-.2 1.1.1.9 1z" fill="#888"/></svg></a>
+        <a href="#" class="footer-social-link" title="YouTube" aria-label="YouTube"><svg width="26" height="26" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="16" fill="#ececec"/><path d="M22.7 13.1c-.2-.7-.7-1.2-1.4-1.4-1.2-.3-6-.3-6-.3s-4.8 0-6 .3c-.7.2-1.2.7-1.4 1.4-.3 1.2-.3 3.7-.3 3.7s0 2.5.3 3.7c.2.7.7 1.2 1.4 1.4 1.2.3 6 .3 6 .3s4.8 0 6-.3c.7-.2 1.2-.7 1.4-1.4.3-1.2.3-3.7.3-3.7s0-2.5-.3-3.7zm-8.2 6.1v-4.4l4.2 2.2-4.2 2.2z" fill="#888"/></svg></a>
+      </span>
+    </div>
+  </footer>
+
+  {% block extra_js %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Cookie предупреждение
+      if (!localStorage.getItem('cookieAccepted')) {
+        document.getElementById('cookie-warning').style.display = 'flex';
+      }
+      document.getElementById('cookie-accept-btn').onclick = function() {
+        localStorage.setItem('cookieAccepted', '1');
+        document.getElementById('cookie-warning').style.display = 'none';
+      };
+      // Скрытие окна "Сайт в разработке" при открытии модалок
+      var devWarn = document.querySelector('.dev-warning-center');
+      var authBtns = document.querySelectorAll('.header-auth-buttons .auth-btn');
+      if (devWarn && authBtns.length > 1) {
+        authBtns[0].addEventListener('click', function() { devWarn.style.display = 'none'; });
+        authBtns[1].addEventListener('click', function() { devWarn.style.display = 'none'; });
+      }
+
+      // Плавная подгрузка фонового изображения
+      var bgDiv = document.getElementById('main-bg-img');
+      if (bgDiv) {
+        var img = new window.Image();
+        img.src = "{% static 'users/img/main_photo.jpg' %}";
+        img.onload = function() {
+          bgDiv.style.backgroundImage = 'url(' + img.src + ')';
+          bgDiv.style.opacity = '1';
+          bgDiv.style.transition = 'opacity 0.7s';
+        };
+      }
+
+      // Эффект блика на логотипе
+      var logo = document.querySelector('.site-logo a');
+      function shineLogo() {
+        if (!logo) return;
+        logo.classList.remove('blink');
+        // Перезапуск анимации
+        void logo.offsetWidth;
+        logo.classList.add('blink');
+        // Удалить класс после анимации
+        setTimeout(function() { logo.classList.remove('blink'); }, 1600);
+      }
+      if (logo) {
+        // Блик при загрузке
+        setTimeout(shineLogo, 400);
+        // Блик при наведении
+        logo.addEventListener('mouseenter', shineLogo);
+      }
+    });
+  </script>
+  {% endblock %}
 </body>
 </html>
