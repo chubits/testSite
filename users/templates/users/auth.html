@@ -1,15 +1,8 @@
 {% extends 'users/base.html' %}
 
-{% block body %}
+{% block body %}{% endblock %}
 
-{% if messages %}
-  {% for message in messages %}
-    <div class="messages {% if message.tags == 'success' %}success{% else %}error{% endif %}">
-      {{ message }}
-    </div>
-  {% endfor %}
-{% endif %}
-
+{% block overlays %}
 <!-- Модальное окно для входа -->
 <div id="login-modal" class="modal-auth">
   <div class="modal-content">
@@ -60,12 +53,17 @@
       <button type="submit" name="register">Зарегистрироваться</button>
     </form>
   </div>
-
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
   document.addEventListener('DOMContentLoaded', function() {
+    function clearRegisterState() {
+      if (window.location.hash === '#register' || new URLSearchParams(window.location.search).get('modal') === 'register') {
+        history.replaceState(null, '', window.location.pathname);
+      }
+    }
     function closeAllModals() {
       document.querySelectorAll('.modal-auth').forEach(function(modal) {
         modal.style.display = 'none';
@@ -73,10 +71,13 @@
     }
     function openModal(id) {
       closeAllModals();
-      document.getElementById(id).style.display = 'block';
+      document.getElementById(id).style.display = 'flex';
     }
     function closeModal(id) {
       document.getElementById(id).style.display = 'none';
+      if (id === 'register-modal') {
+        clearRegisterState();
+      }
       // Показываем dev-warning при закрытии модалки, если блок есть
       var devWarn = document.getElementById('dev-warning-center');
       if (devWarn) devWarn.style.display = '';
@@ -117,6 +118,13 @@
     // Автоматически открыть модальное окно при ошибке входа или регистрации
     {% if show_login_modal %}openModal('login-modal');{% endif %}
     {% if show_register_modal %}openModal('register-modal');{% endif %}
+    const shouldOpenRegisterModal = window.location.hash === '#register' || new URLSearchParams(window.location.search).get('modal') === 'register';
+    if (shouldOpenRegisterModal) {
+      openModal('register-modal');
+      var devWarn = document.getElementById('dev-warning-center');
+      if (devWarn) devWarn.style.display = 'none';
+      window.scrollTo(0, 0);
+    }
     // Индикация совпадения паролей
     const regForm = document.getElementById('register-form');
     if (regForm) {

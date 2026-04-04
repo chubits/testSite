@@ -1,150 +1,3 @@
-/* --- Адаптивность для мобильных устройств --- */
-@media (max-width: 600px) {
-    .header-bar {
-        flex-direction: column;
-        align-items: center;
-        padding: 12px 8px 0 8px;
-        position: relative;
-        width: 100vw;
-        gap: 0;
-        min-height: 90px;
-    }
-    .site-logo {
-        margin-bottom: 18px;
-    }
-    .header-auth-buttons {
-        margin-top: 0;
-        margin-bottom: 0;
-        margin-left: 0;
-        margin-right: 0;
-        width: 100%;
-        justify-content: center;
-        display: flex;
-        flex-direction: row;
-        gap: 8px;
-        position: static;
-        top: auto;
-        right: auto;
-        z-index: 1;
-    }
-    .site-logo {
-        font-size: 1.3rem;
-        margin-right: 0;
-        margin-bottom: 16px;
-        width: 100%;
-        display: flex;
-        justify-content: center;
-    }
-    .header-auth-buttons {
-        position: static;
-        top: auto;
-        right: auto;
-        flex-direction: row;
-        gap: 8px;
-        margin: 0 0 0 0;
-        width: 100%;
-        justify-content: center;
-        display: flex;
-    }
-    .site-logo {
-        font-size: 1.3rem;
-        margin-right: 0;
-        margin-bottom: 16px;
-        width: 100%;
-        display: flex;
-        justify-content: center;
-    }
-    .site-logo a {
-        font-size: 1.3rem;
-        padding: 6px 12px;
-        width: 100%;
-        text-align: center;
-        box-sizing: border-box;
-    }
-    .header-auth-buttons {
-        position: static;
-        top: auto;
-        right: auto;
-        flex-direction: row;
-        gap: 8px;
-        margin: 10px 0 8px 0;
-        width: 100%;
-        justify-content: center;
-        display: flex;
-    }
-    .main-bg__content {
-        min-height: unset;
-        padding-top: 16px;
-        padding-bottom: 70px;
-        width: 100vw;
-    }
-    .container, .container--wide {
-        padding: 1.1rem;
-        max-width: 100vw;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.10);
-    }
-    .dev-warning-center {
-        min-width: 0;
-        max-width: 98vw;
-        padding: 18px 6vw 16px 6vw;
-        font-size: 1rem;
-    }
-    .dev-warning-title {
-        font-size: 1.2rem;
-    }
-    .dev-warning-text {
-        font-size: 1rem;
-    }
-    .modal-content {
-        max-width: 98vw;
-        padding: 18px 6vw 16px 6vw;
-    }
-    .footer-content {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-        padding: 0 8px;
-    }
-    .site-footer {
-        font-size: 0.98rem;
-        padding: 8px 0 8px 0;
-        position: fixed;
-        left: 0;
-        bottom: 0;
-        width: 100vw;
-    }
-    .cookie-warning {
-        font-size: 0.98rem;
-        padding: 10px 0 10px 0;
-        left: 0;
-        bottom: 48px;
-        width: 100vw;
-    }
-    .footer-copyright {
-        font-size: 0.98rem;
-        margin-left: 0;
-        text-align: left;
-        white-space: normal;
-    }
-    .footer-socials {
-        margin-left: 0;
-    }
-    .button, button, .logout-red-btn, .password-reset-link {
-        font-size: 1rem;
-        padding: 10px;
-    }
-    input[type="text"],
-    input[type="email"],
-    input[type="password"],
-    .form-input {
-        font-size: 1rem;
-        padding: 10px;
-    }
-    textarea.form-input {
-        min-height: 90px;
-    }
-}
 /* Соцсети в футере */
 .footer-socials {
     display: inline-flex;
@@ -165,7 +18,7 @@
 }
 /* Центрированное приветствие о разработке */
 .dev-warning-center {
-    position: absolute;
+    position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -390,23 +243,30 @@
     display: none;
     position: fixed;
     z-index: 200;
-    left: 0;
-    top: 0;
+    inset: 0;
     width: 100vw;
-    height: 100vh;
-    overflow: auto;
+    height: 100dvh;
+    overflow-y: auto;
     background: rgba(0,0,0,0.35);
     align-items: center;
     justify-content: center;
+    padding: 16px;
+    box-sizing: border-box;
 }
 .modal-content {
     background: #fff;
-    margin: 7% auto;
+    margin: 0;
     padding: 32px 28px 24px 28px;
+    width: min(400px, calc(100vw - 32px));
     border-radius: 10px;
     max-width: 400px;
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
     box-shadow: 0 4px 32px rgba(0,0,0,0.13);
-    position: relative;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 .close-modal {
     position: absolute;
@@ -544,6 +404,13 @@ body {
     min-height: 100vh;
 }
 
+.main-bg__content--profile {
+    align-items: flex-start;
+    padding-top: 104px;
+    padding-bottom: 88px;
+    box-sizing: border-box;
+}
+
 .container {
     background: rgba(255,255,255,0.97);
     border-radius: 12px;
@@ -568,6 +435,14 @@ body {
 
 .container--wide {
     max-width: 620px;
+}
+
+.profile-container {
+    margin-top: 0;
+}
+
+.profile-form {
+    max-width: 400px;
 }
 
 h1 { margin: 0 0 0.5rem; color: #333; }
@@ -681,4 +556,139 @@ button:hover {
 .logout-btn:hover {
     color: #c62828;
     background: none;
+}
+
+/* --- Адаптивность для мобильных устройств --- */
+@media (max-width: 600px) {
+    .header-bar {
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 12px 8px 0 8px;
+        gap: 0;
+        min-height: 90px;
+    }
+    .site-logo {
+        order: 1;
+        font-size: 1.3rem;
+        margin-right: 0;
+        margin-bottom: 16px;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+    .site-logo a {
+        font-size: 1.3rem;
+        padding: 6px 12px;
+        width: 100%;
+        text-align: center;
+        box-sizing: border-box;
+    }
+    .header-auth-buttons {
+        order: 2;
+        position: static;
+        top: auto;
+        right: auto;
+        margin: 10px 0 8px 0;
+        width: 100%;
+        justify-content: center;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 8px;
+        z-index: 1;
+    }
+    .main-bg__content {
+        min-height: unset;
+        padding-top: 150px;
+        padding-bottom: 70px;
+        width: 100vw;
+    }
+    .main-bg__content--profile {
+        padding-top: 150px;
+        padding-bottom: 70px;
+    }
+    .container, .container--wide {
+        padding: 1.1rem;
+        max-width: 100vw;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.10);
+    }
+    .profile-container {
+        margin-top: 0;
+    }
+    .profile-user-info {
+        padding: 1rem !important;
+    }
+    .profile-user-summary {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 12px;
+    }
+    .profile-form {
+        max-width: 100%;
+    }
+    .dev-warning-center {
+        min-width: 0;
+        max-width: 98vw;
+        padding: 18px 6vw 16px 6vw;
+        font-size: 1rem;
+    }
+    .dev-warning-title {
+        font-size: 1.2rem;
+    }
+    .dev-warning-text {
+        font-size: 1rem;
+    }
+    .modal-content {
+        width: calc(100vw - 24px);
+        max-width: 98vw;
+        padding: 18px 6vw 16px 6vw;
+        max-height: calc(100dvh - 24px);
+    }
+    .footer-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 0 8px;
+    }
+    .site-footer {
+        font-size: 0.98rem;
+        padding: 8px 0 8px 0;
+        position: fixed;
+        left: 0;
+        bottom: 0;
+        width: 100vw;
+    }
+    .cookie-warning {
+        font-size: 0.98rem;
+        padding: 10px 0 10px 0;
+        left: 0;
+        bottom: 48px;
+        width: 100vw;
+    }
+    .footer-copyright {
+        font-size: 0.98rem;
+        margin-left: 0;
+        text-align: left;
+        white-space: normal;
+    }
+    .footer-socials {
+        margin-left: 0;
+    }
+    .button, button, .logout-red-btn, .password-reset-link {
+        font-size: 1rem;
+        padding: 10px;
+    }
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    .form-input {
+        font-size: 1rem;
+        padding: 10px;
+    }
+    textarea.form-input {
+        min-height: 90px;
+    }
 }

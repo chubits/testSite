@@ -173,6 +173,8 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 LOGIN_REDIRECT_URL = "/profile/"  # куда отправлять после входа
 LOGOUT_REDIRECT_URL = "/"  # после выхода — на главную
 LOGIN_URL = "/"  # страница логина
+SESSION_COOKIE_AGE = env_int("SESSION_COOKIE_AGE", 600)
+SESSION_SAVE_EVERY_REQUEST = True
 
 # если хотите — можно сразу после регистрации логинить пользователя
 # ACCOUNT_EMAIL_VERIFICATION = 'none'   (если будете ставить django-allauth)

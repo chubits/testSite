@@ -81,7 +81,9 @@ logger = logging.getLogger(__name__)
 
 
 def auth_page(request):
-    if request.user.is_authenticated:
+    show_home_page = request.GET.get("home") == "1"
+
+    if request.user.is_authenticated and not show_home_page:
         return redirect("profile")
 
     register_form = RegisterForm()
@@ -120,6 +122,7 @@ def auth_page(request):
             "login_form": login_form,
             "show_login_modal": show_login_modal,
             "show_register_modal": show_register_modal,
+            "show_dev_warning": not request.user.is_authenticated or show_home_page,
         },
     )
 

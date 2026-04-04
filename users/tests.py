@@ -1,6 +1,7 @@
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
+from django.conf import settings
 
 
 class AuthTests(TestCase):
@@ -69,6 +70,7 @@ class AuthTests(TestCase):
         response = self.client.post(self.auth_url, {
             "username": "newuser",
             "email": "new@example.com",
+            "phone": "+79990000000",
             "password1": "StrongPass123!",
             "password2": "StrongPass123!",
             "register": "",
@@ -80,6 +82,7 @@ class AuthTests(TestCase):
         response = self.client.post(self.auth_url, {
             "username": self.user_data["username"],
             "email": "other@example.com",
+            "phone": "+79990000001",
             "password1": "StrongPass123!",
             "password2": "StrongPass123!",
             "register": "",
@@ -91,6 +94,7 @@ class AuthTests(TestCase):
         response = self.client.post(self.auth_url, {
             "username": "mismatch",
             "email": "mm@example.com",
+            "phone": "+79990000002",
             "password1": "StrongPass123!",
             "password2": "DifferentPass!",
             "register": "",
@@ -131,4 +135,8 @@ class AuthTests(TestCase):
             password=self.user_data["password"],
         )
         response = self.client.get(self.logout_url)
-        self.assertRedirects(response, self.auth_url)
+        self.assertEqual(response.status_code, 405)
+
+    def test_session_timeout_settings(self):
+        self.assertEqual(settings.SESSION_COOKIE_AGE, 600)
+        self.assertTrue(settings.SESSION_SAVE_EVERY_REQUEST)
