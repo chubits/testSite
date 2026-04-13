@@ -343,7 +343,7 @@
     height: 100vh;
     min-width: 100vw;
     min-height: 100vh;
-    background: url('/static/users/img/main_photo.jpg') center center/cover no-repeat;
+    background: url('/static/users/img/main_photo.webp') center center/cover no-repeat;
     z-index: 1;
     pointer-events: none;
 }
