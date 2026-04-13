@@ -33,6 +33,7 @@ def password_reset_done(request):
 # Стандартные библиотеки
 import logging
 from smtplib import SMTPAuthenticationError
+from socket import timeout as SocketTimeout
 
 # Django
 from django.shortcuts import render, redirect
@@ -55,22 +56,73 @@ def password_reset_request(request):
     if request.method == "POST":
         form = PasswordResetRequestForm(request.POST)
         if form.is_valid():
+            if not settings.EMAIL_HOST_USER or not settings.EMAIL_HOST_PASSWORD:
+                messages.error(
+                    request,
+                    "Письмо не отправлено: в .env не заполнены EMAIL_HOST_USER или EMAIL_HOST_PASSWORD."
+                )
+                return redirect("password_reset")
+
+            if settings.EMAIL_HOST_PASSWORD == "your-mail-ru-app-password":
+                messages.error(
+                    request,
+                    "Письмо не отправлено: в .env указан шаблонный EMAIL_HOST_PASSWORD. "
+                    "Укажите реальный пароль приложения для recovery@kasago.ru."
+                )
+                return redirect("password_reset")
+
             email = form.cleaned_data['email']
             users = User.objects.filter(email=email)
+            if settings.DEBUG:
+                domain = request.get_host()
+                protocol = 'https' if request.is_secure() else 'http'
+            else:
+                domain = settings.SITE_DOMAIN or request.get_host()
+                protocol = settings.SITE_PROTOCOL or ('https' if request.is_secure() else 'http')
             for user in users:
                 subject = "Восстановление пароля"
                 email_template_name = "users/password_reset_email.txt"
                 c = {
                     "email": user.email,
-                    'domain': request.get_host(),
+                    'domain': domain,
                     'site_name': 'Ваш сайт',
                     "uid": urlsafe_base64_encode(force_bytes(user.pk)),
                     "user": user,
                     'token': default_token_generator.make_token(user),
-                    'protocol': 'https' if request.is_secure() else 'http',
+                    'protocol': protocol,
                 }
                 email_content = render_to_string(email_template_name, c)
-                send_mail(subject, email_content, settings.DEFAULT_FROM_EMAIL, [user.email])
+                try:
+                    send_mail(
+                        subject,
+                        email_content,
+                        settings.PASSWORD_RESET_FROM_EMAIL,
+                        [user.email],
+                        fail_silently=False,
+                    )
+                except SMTPAuthenticationError:
+                    logger.exception("SMTP authentication failed during password reset")
+                    messages.error(
+                        request,
+                        "Не удалось отправить письмо для восстановления пароля: "
+                        "ошибка авторизации почтового сервера."
+                    )
+                    return redirect("password_reset")
+                except (ConnectionRefusedError, SocketTimeout, OSError):
+                    logger.exception("SMTP connection failed during password reset")
+                    messages.error(
+                        request,
+                        "Не удалось подключиться к почтовому серверу. Проверьте SMTP-хост, порт "
+                        "и ограничения провайдера почты."
+                    )
+                    return redirect("password_reset")
+                except Exception:
+                    logger.exception("Failed to send password reset email")
+                    messages.error(
+                        request,
+                        "Не удалось отправить письмо для восстановления пароля. Попробуйте позже."
+                    )
+                    return redirect("password_reset")
             return redirect("password_reset_done")
     else:
         form = PasswordResetRequestForm()

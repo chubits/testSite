@@ -183,7 +183,7 @@ SESSION_SAVE_EVERY_REQUEST = True
 
 EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
 
-EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.mail.ru')
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'mail.jino.ru')
 EMAIL_PORT = env_int('EMAIL_PORT', 465)
 EMAIL_USE_TLS = env_bool('EMAIL_USE_TLS', False)
 EMAIL_USE_SSL = env_bool('EMAIL_USE_SSL', True)
@@ -192,6 +192,9 @@ EMAIL_TIMEOUT = env_int('EMAIL_TIMEOUT', 60)
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
+PASSWORD_RESET_FROM_EMAIL = os.getenv('PASSWORD_RESET_FROM_EMAIL', DEFAULT_FROM_EMAIL)
+SITE_DOMAIN = os.getenv('SITE_DOMAIN', '')
+SITE_PROTOCOL = os.getenv('SITE_PROTOCOL', 'https')
 
 # Адрес электронной почты получателя обратной связи
 FEEDBACK_RECIPIENT_EMAIL = os.getenv('FEEDBACK_RECIPIENT_EMAIL', EMAIL_HOST_USER)

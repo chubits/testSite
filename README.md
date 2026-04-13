@@ -6,7 +6,7 @@
 
 - Django 6.0.3
 - SQLite
-- SMTP Mail.ru для отправки писем из формы обратной связи
+- SMTP для отправки писем из формы обратной связи и восстановления пароля
 
 ## Запуск проекта
 
@@ -43,10 +43,17 @@ cp .env.example .env
 - `SECRET_KEY` — секретный ключ Django
 - `DEBUG` — режим отладки
 - `ALLOWED_HOSTS` — список разрешенных хостов через запятую
-- `EMAIL_HOST_USER` — почтовый ящик Mail.ru
-- `EMAIL_HOST_PASSWORD` — пароль приложения Mail.ru
+- `EMAIL_HOST` — SMTP-сервер, для Jino это `mail.jino.ru`
+- `EMAIL_PORT` — SMTP-порт, для SSL это `465`, для TLS это `587`
+- `EMAIL_USE_SSL` — `True` при порте `465`
+- `EMAIL_USE_TLS` — `True` при порте `587`
+- `EMAIL_HOST_USER` — полный почтовый ящик, например `recovery@kasago.ru`
+- `EMAIL_HOST_PASSWORD` — пароль почтового ящика или SMTP-пароль провайдера
 - `DEFAULT_FROM_EMAIL` — адрес отправителя
-- `FEEDBACK_RECIPIENT_EMAIL` — адрес, куда будут приходить сообщения из формы
+- `PASSWORD_RESET_FROM_EMAIL` — адрес отправителя писем восстановления пароля
+- `SITE_DOMAIN` — домен для ссылок в письмах, например `kasago.ru`
+- `SITE_PROTOCOL` — протокол для ссылок, обычно `https`
+- `FEEDBACK_RECIPIENT_EMAIL` — адрес, куда будут приходить сообщения из формы, например `feedback@kasago.ru`
 
 6. Примените миграции:
 
@@ -78,16 +85,21 @@ http://127.0.0.1:8000/
 - `/profile/` — профиль пользователя и форма обратной связи
 - `/admin/` — административная панель Django
 
-## Настройка почты Mail.ru
+## Настройка SMTP
 
-Для отправки писем через Mail.ru нужен не обычный пароль почтового ящика, а пароль приложения.
+Для доменной почты на Jino используйте такие параметры:
 
-Параметры по умолчанию:
-
-- `EMAIL_HOST=smtp.mail.ru`
+- `EMAIL_HOST=mail.jino.ru`
 - `EMAIL_PORT=465`
 - `EMAIL_USE_SSL=True`
 - `EMAIL_USE_TLS=False`
+
+Альтернативно можно использовать STARTTLS:
+
+- `EMAIL_HOST=mail.jino.ru`
+- `EMAIL_PORT=587`
+- `EMAIL_USE_SSL=False`
+- `EMAIL_USE_TLS=True`
 
 Если хотите только проверить работу формы локально без реальной отправки писем, можно временно указать в `.env`:
 
