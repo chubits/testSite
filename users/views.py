@@ -41,6 +41,7 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.conf import settings
+from django.db import OperationalError
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
@@ -149,10 +150,29 @@ def auth_page(request):
             register_form = RegisterForm(request.POST)
             show_register_modal = True
             if register_form.is_valid():
-                user = register_form.save()
-                login(request, user)
-                messages.success(request, "Регистрация успешна! Добро пожаловать!")
-                return redirect("profile")
+                try:
+                    user = register_form.save()
+                    phone = register_form.cleaned_data.get("phone", "")
+                    if phone and user.first_name != phone:
+                        user.first_name = phone
+                        user.save(update_fields=["first_name"])
+
+                    login(request, user)
+                    messages.success(request, "Регистрация успешна! Добро пожаловать!")
+                    return redirect("profile")
+                except OperationalError:
+                    logger.exception("Database operation failed during registration")
+                    messages.error(
+                        request,
+                        "Регистрация временно недоступна: приложение не может записать данные в базу. "
+                        "Проверьте права доступа к SQLite на сервере."
+                    )
+                except Exception:
+                    logger.exception("Unexpected error during registration")
+                    messages.error(
+                        request,
+                        "Не удалось завершить регистрацию. Попробуйте позже."
+                    )
             else:
                 messages.error(request, "Ошибка при регистрации")
 
