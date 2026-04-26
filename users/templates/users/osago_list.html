@@ -1,0 +1,74 @@
+{% extends 'users/base.html' %}
+
+{% block title %}Полисы ОСАГО — KOSAGO.RU{% endblock %}
+
+{% block main_content_class %}main-bg__content--profile{% endblock %}
+
+{% block body %}
+<div class="container container--wide profile-container">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem;">
+        <div>
+            <h1 style="margin:0;">Полисы ОСАГО</h1>
+            <p class="welcome" style="margin:0.3rem 0 0;">Список ваших полисов обязательного страхования</p>
+        </div>
+        <a href="{% url 'osago_create' %}" class="osago-btn-primary">+ Новый полис</a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="messages {% if message.tags == 'success' %}success{% else %}error{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if policies %}
+    <div class="profile-table-wrap">
+        <table class="profile-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Страхователь</th>
+                    <th>Автомобиль</th>
+                    <th>Гос. номер</th>
+                    <th>Страховая</th>
+                    <th>Период</th>
+                    <th>Премия (₽)</th>
+                    <th>Статус</th>
+                    <th>Действие</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in policies %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>
+                        {{ p.insured_last_name }}{% if p.insured_first_name %} {{ p.insured_first_name|first }}.{% endif %}{% if p.insured_middle_name %}{{ p.insured_middle_name|first }}.{% endif %}
+                        {% if not p.insured_last_name and not p.insured_first_name %}<span style="color:#aaa;">—</span>{% endif %}
+                    </td>
+                    <td>{{ p.vehicle_make }} {{ p.vehicle_model }}{% if p.vehicle_year %} ({{ p.vehicle_year }}){% endif %}</td>
+                    <td>{{ p.vehicle_plate|default:"—" }}</td>
+                    <td>{{ p.insurer_name|default:"—" }}</td>
+                    <td>
+                        {% if p.policy_start %}{{ p.policy_start|date:"d.m.Y" }}{% else %}—{% endif %}
+                        {% if p.policy_end %} — {{ p.policy_end|date:"d.m.Y" }}{% endif %}
+                    </td>
+                    <td>{{ p.premium_amount|floatformat:0|default:"—" }}</td>
+                    <td><span class="bi-status bi-status--osago-{{ p.status }}">{{ p.get_status_display }}</span></td>
+                    <td><a href="{% url 'osago_edit' p.pk %}" class="profile-table-edit-btn">Изменить</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="osago-empty">
+        <div class="osago-empty__icon">📋</div>
+        <p class="osago-empty__text">У вас пока нет полисов ОСАГО.</p>
+        <a href="{% url 'osago_create' %}" class="osago-btn-primary">Создать первый полис</a>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

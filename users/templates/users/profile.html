@@ -7,21 +7,82 @@
 {% block body %}
 <div class="container container--wide profile-container">
 
-    <h1>Привет, {{ user.username }}!</h1>
+    <h1><span id="greeting-word">Привет</span>, {{ user.username }}!</h1>
     <p class="welcome">Добро пожаловать в личный кабинет KOSAGO.RU</p>
 
 
     <div class="user-info profile-user-info" style="margin-bottom: 2rem; background: #f8f9fa; border-radius: 10px; border: 1px solid #e9ecef; padding: 1.2rem;">
         <h2 style="text-align:left; margin:0 0 1rem 0; font-size:1.2rem; color:#333;">Ваши данные</h2>
         <div class="profile-user-summary" style="display:flex;align-items:center;gap:18px;margin-bottom:18px;">
-            <img src="https://ui-avatars.com/api/?name={{ user.username|urlencode }}&size=80&background=E53935&color=fff" alt="Аватар пользователя" style="width:64px;height:64px;border-radius:50%;border:2px solid #e53935;background:#fff;object-fit:cover;">
+            {% if user_profile.avatar %}
+                <img src="{{ user_profile.avatar.url }}" alt="Аватар" id="avatar-preview" style="width:64px;height:64px;border-radius:50%;border:2px solid #e53935;background:#fff;object-fit:cover;">
+            {% else %}
+                <img src="https://ui-avatars.com/api/?name={{ user.username|urlencode }}&size=80&background=E53935&color=fff" alt="Аватар пользователя" id="avatar-preview" style="width:64px;height:64px;border-radius:50%;border:2px solid #e53935;background:#fff;object-fit:cover;">
+            {% endif %}
             <span style="font-size:1.1rem;color:#444;">{{ user.username }}</span>
         </div>
-        <form method="post" class="profile-form" style="max-width: 400px;">
-            {% csrf_token %}
-            {{ profile_form.as_p }}
-            <button type="submit" name="edit_profile" class="button" style="margin-top: 10px;">Сохранить изменения</button>
-        </form>
+
+        <div class="profile-table-wrap">
+            <table class="profile-table">
+                <thead>
+                    <tr>
+                        <th>Фамилия</th>
+                        <th>Имя</th>
+                        <th>Отчество</th>
+                        <th>Email</th>
+                        <th>Телефон</th>
+                        <th>Статус</th>
+                        <th>Последний вход</th>
+                        <th>Действие</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{ user_profile.last_name|default:"—" }}</td>
+                        <td>{{ user_profile.first_name|default:"—" }}</td>
+                        <td>{{ user_profile.middle_name|default:"—" }}</td>
+                        <td>{{ user.email|default:"—" }}</td>
+                        <td>{{ user_profile.phone|default:"—" }}</td>
+                        <td>
+                            {% if user_profile.role == 'broker' %}
+                                <span class="bi-role-badge bi-role-badge--broker">Брокер</span>
+                            {% elif user_profile.role == 'agent' %}
+                                <span class="bi-role-badge bi-role-badge--agent">Агент</span>
+                            {% else %}
+                                <span style="color:#aaa;">—</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ user.last_login|date:"d.m.Y H:i"|default:"—" }}</td>
+                        <td>
+                            <button type="button" id="open-edit-form-btn" class="profile-table-edit-btn">Редактировать</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="profile-edit-form" style="display:none; margin-top:1.2rem;">
+            <form method="post" enctype="multipart/form-data" class="profile-form" style="max-width: 400px;">
+                {% csrf_token %}
+                <div style="margin-bottom:1rem;">
+                    <label style="display:block;font-size:0.87rem;color:#555;margin-bottom:6px;font-weight:500;">Аватар</label>
+                    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                        <img src="{% if user_profile.avatar %}{{ user_profile.avatar.url }}{% else %}https://ui-avatars.com/api/?name={{ user.username|urlencode }}&size=60&background=E53935&color=fff{% endif %}" id="avatar-edit-preview" style="width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid #e53935;">
+                        <label class="avatar-upload-label">
+                            Выбрать фото
+                            {{ profile_form.avatar }}
+                        </label>
+                    </div>
+                    {% if profile_form.avatar.errors %}<span style="color:#c62828;font-size:0.82rem;">{{ profile_form.avatar.errors|join:", " }}</span>{% endif %}
+                </div>
+                {% for field in profile_form %}
+                    {% if field.name != 'avatar' %}
+                        <p>{{ field.label_tag }} {{ field }} {% if field.errors %}<span style="color:#c62828;font-size:0.82rem;">{{ field.errors|join:", " }}</span>{% endif %}</p>
+                    {% endif %}
+                {% endfor %}
+                <button type="submit" name="edit_profile" class="button" style="margin-top: 10px;">Сохранить изменения</button>
+            </form>
+        </div>
     </div>
 
 
@@ -33,15 +94,40 @@
         {% endfor %}
     {% endif %}
 
-    <div class="feedback-section">
-        <h2>Предложения по улучшению проекта</h2>
-        <p>Расскажите, что можно улучшить, добавить или изменить в KOSAGO.RU.<br>Ваше мнение очень важно!</p>
+    <!-- Статистика полисов -->
+    <div class="feedback-section" style="margin-top:2rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.8rem;margin-bottom:1rem;">
+            <h2 class="bi-section-title" style="margin:0;">Статистика полисов ОСАГО</h2>
+            <a href="{% url 'osago_list' %}" class="osago-btn-primary" style="font-size:0.9rem;padding:6px 16px;">Все полисы</a>
+        </div>
+        <div class="bi-cards" style="margin-bottom:0;">
+            <div class="bi-card">
+                <div class="bi-card__value">{{ osago_stats.total }}</div>
+                <div class="bi-card__label">Всего</div>
+            </div>
+            <div class="bi-card bi-card--blue">
+                <div class="bi-card__value">{{ osago_stats.draft }}</div>
+                <div class="bi-card__label">Черновиков</div>
+            </div>
+            <div class="bi-card bi-card--green">
+                <div class="bi-card__value">{{ osago_stats.active }}</div>
+                <div class="bi-card__label">Активных</div>
+            </div>
+            <div class="bi-card" style="border-top-color:#e65100;">
+                <div class="bi-card__value">{{ osago_stats.expired }}</div>
+                <div class="bi-card__label">Истекших</div>
+            </div>
+            <div class="bi-card bi-card--red">
+                <div class="bi-card__value">{{ osago_stats.cancelled }}</div>
+                <div class="bi-card__label">Аннулировано</div>
+            </div>
+        </div>
+    </div>
 
-        <form method="post">
-            {% csrf_token %}
-            {{ feedback_form.as_p }}
-            <button type="submit" name="feedback">Отправить предложение</button>
-        </form>
+    <div class="feedback-section" style="margin-top: 2rem;">
+        <button type="button" id="open-feedback-modal" style="background:#0066ff;color:#fff;border:none;border-radius:6px;padding:10px 24px;font-size:1rem;cursor:pointer;width:auto;">
+            Предложения по улучшению проекта
+        </button>
     </div>
 
     <div class="feedback-section" style="margin-top: 2rem;">
@@ -51,4 +137,114 @@
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block overlays %}
+<div id="feedback-modal" class="modal-auth" style="display:none;">
+    <div class="modal-content" style="max-width:480px;width:min(480px,calc(100vw - 32px));">
+        <span class="close-modal" id="close-feedback-modal">&times;</span>
+        <h2 style="margin:0 0 0.8rem 0;text-align:left;font-size:1.2rem;color:#333;">Предложения по улучшению проекта</h2>
+        <p style="color:#555;margin:0 0 1rem 0;font-size:0.97rem;">Расскажите, что можно улучшить, добавить или изменить в KOSAGO.RU.<br>Ваше мнение очень важно!</p>
+        <form method="post">
+            {% csrf_token %}
+            {{ feedback_form.as_p }}
+            <button type="submit" name="feedback">Отправить предложение</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    // Приветствие на разных языках
+    var greetings = [
+        'Привет',       // русский
+        'Hello',        // английский
+        'Hola',         // испанский
+        'Bonjour',      // французский
+        'Ciao',         // итальянский
+        'Hallo',        // немецкий
+        'Olá',          // португальский
+        'Merhaba',      // турецкий
+        'Salut',        // румынский
+        'Здравей',      // болгарский
+        'Ahoj',         // чешский
+        'Cześć',        // польский
+        'Szia',         // венгерский
+        'Hei',          // финский
+        'Hej',          // шведский/датский
+        'Γεια σου',     // греческий
+        'Xin chào',     // вьетнамский
+        'Selam',        // азербайджанский
+        'Салам',        // казахский/киргизский
+        'Привіт',       // украинский
+    ];
+    var el = document.getElementById('greeting-word');
+    if (el) {
+        var word = greetings[Math.floor(Math.random() * greetings.length)];
+        el.textContent = word;
+    }
+
+    // Toggle profile edit form
+    var editBtn = document.getElementById('open-edit-form-btn');
+    var editForm = document.getElementById('profile-edit-form');
+    if (editBtn && editForm) {
+        editBtn.addEventListener('click', function () {
+            var visible = editForm.style.display !== 'none';
+            editForm.style.display = visible ? 'none' : 'block';
+            editBtn.textContent = visible ? 'Редактировать' : 'Свернуть';
+        });
+        {% if profile_form.errors %}
+        editForm.style.display = 'block';
+        editBtn.textContent = 'Свернуть';
+        {% endif %}
+    }
+
+    // Avatar live preview
+    var avatarInput = document.querySelector('.avatar-file-input');
+    var avatarPreviewMain = document.getElementById('avatar-preview');
+    var avatarPreviewEdit = document.getElementById('avatar-edit-preview');
+    if (avatarInput) {
+        avatarInput.addEventListener('change', function () {
+            var file = this.files[0];
+            if (file && file.type.startsWith('image/')) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    if (avatarPreviewMain) avatarPreviewMain.src = e.target.result;
+                    if (avatarPreviewEdit) avatarPreviewEdit.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    // Feedback modal
+    var modal = document.getElementById('feedback-modal');
+    var openBtn = document.getElementById('open-feedback-modal');
+    var closeBtn = document.getElementById('close-feedback-modal');
+
+    function openModal() {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    function closeModal() {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', function (e) {
+        if (e.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeModal();
+    });
+
+    {% if feedback_form.errors %}
+    openModal();
+    {% endif %}
+})();
+</script>
 {% endblock %}

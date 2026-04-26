@@ -21,6 +21,8 @@
       <a href="{% url 'auth' %}" class="auth-btn">Вход</a>
       <a href="{% url 'auth' %}?modal=register" class="auth-btn">Регистрация</a>
     {% else %}
+      <a href="{% url 'dashboard' %}" class="auth-btn">Дашборд</a>
+      <a href="{% url 'osago_list' %}" class="auth-btn">ОСАГО</a>
       <a href="{% url 'profile' %}" class="auth-btn">Профиль</a>
     {% endif %}
   </div>
@@ -78,34 +80,37 @@
         authBtns[1].addEventListener('click', function() { devWarn.style.display = 'none'; });
       }
 
-      // Плавная подгрузка фонового изображения
-      var bgDiv = document.getElementById('main-bg-img');
-      if (bgDiv) {
-        var img = new window.Image();
-        img.src = "{% static 'users/img/main_photo.webp' %}";
-        img.onload = function() {
-          bgDiv.style.backgroundImage = 'url(' + img.src + ')';
-          bgDiv.style.opacity = '1';
-          bgDiv.style.transition = 'opacity 0.7s';
-        };
-      }
-
       // Эффект блика на логотипе
       var logo = document.querySelector('.site-logo a');
       function shineLogo() {
         if (!logo) return;
         logo.classList.remove('blink');
-        // Перезапуск анимации
         void logo.offsetWidth;
         logo.classList.add('blink');
-        // Удалить класс после анимации
         setTimeout(function() { logo.classList.remove('blink'); }, 1600);
       }
+      function glowLogo() {
+        if (!logo) return;
+        logo.classList.remove('logo-glow');
+        void logo.offsetWidth;
+        logo.classList.add('logo-glow');
+        setTimeout(function() { logo.classList.remove('logo-glow'); }, 1200);
+      }
       if (logo) {
-        // Блик при загрузке
-        setTimeout(shineLogo, 400);
-        // Блик при наведении
-        logo.addEventListener('mouseenter', shineLogo);
+        // Появление при загрузке
+        logo.classList.add('logo-enter');
+        logo.addEventListener('animationend', function onEnter(e) {
+          if (e.animationName === 'logo-entrance') {
+            logo.classList.remove('logo-enter');
+            logo.removeEventListener('animationend', onEnter);
+            // Блик сразу после появления
+            setTimeout(function() { shineLogo(); glowLogo(); }, 200);
+          }
+        });
+        // Периодический блик + свечение каждые 5 секунд
+        setInterval(function() { shineLogo(); glowLogo(); }, 5000);
+        // Блик + свечение при наведении
+        logo.addEventListener('mouseenter', function() { shineLogo(); glowLogo(); });
       }
 
       var idleLogoutForm = document.getElementById('idle-logout-form');

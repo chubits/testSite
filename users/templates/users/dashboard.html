@@ -1,0 +1,200 @@
+{% extends 'users/base.html' %}
+
+{% block title %}BI Дашборд — KOSAGO.RU{% endblock %}
+
+{% block main_content_class %}main-bg__content--profile{% endblock %}
+
+{% block body %}
+<div class="container container--wide profile-container">
+    <h1>BI Дашборд</h1>
+    <p class="welcome">Аналитика по работе брокеров и агентов</p>
+
+    <!-- Сводные карточки -->
+    <div class="bi-cards">
+        <div class="bi-card">
+            <div class="bi-card__value">{{ total_deals }}</div>
+            <div class="bi-card__label">Всего сделок</div>
+        </div>
+        <div class="bi-card bi-card--green">
+            <div class="bi-card__value">{{ closed_deals }}</div>
+            <div class="bi-card__label">Закрыто</div>
+        </div>
+        <div class="bi-card bi-card--blue">
+            <div class="bi-card__value">{{ in_progress_deals }}</div>
+            <div class="bi-card__label">В работе</div>
+        </div>
+        <div class="bi-card bi-card--red">
+            <div class="bi-card__value">{{ total_amount|floatformat:0 }} ₽</div>
+            <div class="bi-card__label">Сумма закрытых</div>
+        </div>
+        <div class="bi-card bi-card--gray">
+            <div class="bi-card__value">{{ brokers_count }}</div>
+            <div class="bi-card__label">Брокеров</div>
+        </div>
+        <div class="bi-card bi-card--gray">
+            <div class="bi-card__value">{{ agents_count }}</div>
+            <div class="bi-card__label">Агентов</div>
+        </div>
+    </div>
+
+    <!-- Графики -->
+    <div class="bi-charts">
+        <div class="bi-chart-box">
+            <h2 class="bi-section-title">Сделки по месяцам</h2>
+            <canvas id="chartMonthly" height="120"></canvas>
+        </div>
+        <div class="bi-chart-box">
+            <h2 class="bi-section-title">Статусы сделок</h2>
+            <canvas id="chartStatus" height="120"></canvas>
+        </div>
+    </div>
+
+    <!-- Таблица по сотрудникам -->
+    <div class="bi-section">
+        <h2 class="bi-section-title">Показатели сотрудников</h2>
+        {% if user_stats %}
+        <div class="profile-table-wrap">
+            <table class="profile-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Сотрудник</th>
+                        <th>Роль</th>
+                        <th>Всего сделок</th>
+                        <th>Закрыто</th>
+                        <th>В работе</th>
+                        <th>Отменено</th>
+                        <th>Сумма закрытых (₽)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in user_stats %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            {% if row.profile.last_name or row.profile.first_name %}
+                                {{ row.profile.last_name }} {{ row.profile.first_name }}{% if row.profile.middle_name %} {{ row.profile.middle_name }}{% endif %}
+                            {% else %}
+                                {{ row.profile.user.username }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="bi-role-badge bi-role-badge--{{ row.profile.role }}">
+                                {{ row.profile.get_role_display }}
+                            </span>
+                        </td>
+                        <td>{{ row.total }}</td>
+                        <td><span class="bi-count bi-count--green">{{ row.closed }}</span></td>
+                        <td><span class="bi-count bi-count--blue">{{ row.in_progress }}</span></td>
+                        <td><span class="bi-count bi-count--red">{{ row.cancelled }}</span></td>
+                        <td>{{ row.amount|floatformat:0 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="color:#888;">Нет брокеров или агентов с назначенными сделками.</p>
+        {% endif %}
+    </div>
+
+    <!-- Последние сделки -->
+    <div class="bi-section">
+        <h2 class="bi-section-title">Последние сделки</h2>
+        {% if recent_deals %}
+        <div class="profile-table-wrap">
+            <table class="profile-table">
+                <thead>
+                    <tr>
+                        <th>Сделка</th>
+                        <th>Статус</th>
+                        <th>Сумма (₽)</th>
+                        <th>Ответственный</th>
+                        <th>Создана</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for deal in recent_deals %}
+                    <tr>
+                        <td>{{ deal.title }}</td>
+                        <td>
+                            <span class="bi-status bi-status--{{ deal.status }}">
+                                {{ deal.get_status_display }}
+                            </span>
+                        </td>
+                        <td>{{ deal.amount|floatformat:0 }}</td>
+                        <td>
+                            {% if deal.assigned_to %}
+                                {% with p=deal.assigned_to.userprofile %}
+                                    {% if p.last_name or p.first_name %}
+                                        {{ p.last_name }} {{ p.first_name }}
+                                    {% else %}
+                                        {{ deal.assigned_to.username }}
+                                    {% endif %}
+                                {% endwith %}
+                            {% else %}—{% endif %}
+                        </td>
+                        <td>{{ deal.created_at|date:"d.m.Y H:i" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="color:#888;">Сделки ещё не созданы. Добавьте их через <a href="/admin/">панель администратора</a>.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    var labels = {{ chart_labels|safe }};
+    var data   = {{ chart_data|safe }};
+    var statusRaw = {{ status_counts|safe }};
+
+    // Bar chart — сделки по месяцам
+    var ctxBar = document.getElementById('chartMonthly');
+    if (ctxBar) {
+        new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: labels.length ? labels : ['Нет данных'],
+                datasets: [{
+                    label: 'Сделок',
+                    data: data.length ? data : [0],
+                    backgroundColor: 'rgba(0, 102, 255, 0.7)',
+                    borderRadius: 5,
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+            }
+        });
+    }
+
+    // Doughnut chart — статусы
+    var ctxDoughnut = document.getElementById('chartStatus');
+    if (ctxDoughnut) {
+        new Chart(ctxDoughnut, {
+            type: 'doughnut',
+            data: {
+                labels: ['Новая', 'В работе', 'Закрыта', 'Отменена'],
+                datasets: [{
+                    data: [statusRaw.new, statusRaw.in_progress, statusRaw.closed, statusRaw.cancelled],
+                    backgroundColor: ['#adb5bd', '#0066ff', '#28a745', '#e53935'],
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                plugins: { legend: { position: 'bottom' } },
+                cutout: '60%',
+            }
+        });
+    }
+})();
+</script>
+{% endblock %}

@@ -82,9 +82,9 @@
       var devWarn = document.getElementById('dev-warning-center');
       if (devWarn) devWarn.style.display = '';
     }
-    // Кнопки в header (первая — вход, вторая — регистрация)
+    // Кнопки в header (первая — вход, вторая — регистрация) — только для неавторизованных (2 кнопки)
     const authBtns = document.querySelectorAll('.header-auth-buttons .auth-btn');
-    if (authBtns.length > 1) {
+    if (authBtns.length === 2) {
       authBtns[0].addEventListener('click', function(e) {
         e.preventDefault();
         openModal('login-modal');

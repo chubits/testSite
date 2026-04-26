@@ -128,7 +128,7 @@ def password_reset_request(request):
     else:
         form = PasswordResetRequestForm()
     return render(request, "users/password_reset_form.html", {"form": form})
-from .models import Feedback
+from .models import Feedback, UserProfile, Deal
 
 logger = logging.getLogger(__name__)
 
@@ -153,9 +153,10 @@ def auth_page(request):
                 try:
                     user = register_form.save()
                     phone = register_form.cleaned_data.get("phone", "")
-                    if phone and user.first_name != phone:
-                        user.first_name = phone
-                        user.save(update_fields=["first_name"])
+                    user_profile, _ = UserProfile.objects.get_or_create(user=user)
+                    if phone:
+                        user_profile.phone = phone
+                        user_profile.save(update_fields=["phone"])
 
                     login(request, user)
                     messages.success(request, "Регистрация успешна! Добро пожаловать!")
@@ -205,8 +206,14 @@ def profile_view(request):
 
 
     # Инициализация форм
+    user_profile, created = UserProfile.objects.get_or_create(user=request.user)
+    # Миграция старых данных: телефон хранился в first_name
+    if created and request.user.first_name:
+        user_profile.phone = request.user.first_name
+        user_profile.save(update_fields=["phone"])
+
     feedback_form = FeedbackForm()
-    profile_form = ProfileEditForm(instance=request.user, initial={"phone": request.user.first_name})
+    profile_form = ProfileEditForm(instance=request.user, user_profile=user_profile)
 
     if request.method == "POST":
         if "feedback" in request.POST:
@@ -249,11 +256,17 @@ def profile_view(request):
             else:
                 messages.error(request, "Пожалуйста, исправьте ошибки в форме.")
         elif "edit_profile" in request.POST:
-            profile_form = ProfileEditForm(request.POST, instance=request.user)
+            profile_form = ProfileEditForm(request.POST, request.FILES, instance=request.user, user_profile=user_profile)
             if profile_form.is_valid():
-                user = profile_form.save(commit=False)
-                user.first_name = profile_form.cleaned_data["phone"]
-                user.save()
+                profile_form.save()
+                user_profile.last_name = profile_form.cleaned_data["last_name"]
+                user_profile.first_name = profile_form.cleaned_data["first_name"]
+                user_profile.middle_name = profile_form.cleaned_data["middle_name"]
+                user_profile.phone = profile_form.cleaned_data["phone"]
+                user_profile.role = profile_form.cleaned_data["role"]
+                if profile_form.cleaned_data.get("avatar"):
+                    user_profile.avatar = profile_form.cleaned_data["avatar"]
+                user_profile.save()
                 messages.success(request, "Данные профиля успешно обновлены.")
                 return redirect("profile")
             else:
@@ -261,8 +274,16 @@ def profile_view(request):
 
     return render(request, "users/profile.html", {
         "user": request.user,
+        "user_profile": user_profile,
         "feedback_form": feedback_form,
         "profile_form": profile_form,
+        "osago_stats": {
+            "total":     OsagoPolicyModel.objects.filter(created_by=request.user).count(),
+            "draft":     OsagoPolicyModel.objects.filter(created_by=request.user, status='draft').count(),
+            "active":    OsagoPolicyModel.objects.filter(created_by=request.user, status='active').count(),
+            "expired":   OsagoPolicyModel.objects.filter(created_by=request.user, status='expired').count(),
+            "cancelled": OsagoPolicyModel.objects.filter(created_by=request.user, status='cancelled').count(),
+        },
     })
 
 
@@ -270,3 +291,112 @@ def profile_view(request):
 def logout_view(request):
     logout(request)
     return redirect("auth")
+
+
+# ===================== ОСАГО =====================
+
+from .forms import OsagoPolicyForm
+from .models import OsagoPolicy as OsagoPolicyModel
+
+
+def osago_list(request):
+    if not request.user.is_authenticated:
+        return redirect("auth")
+    policies = OsagoPolicyModel.objects.filter(created_by=request.user).order_by('-created_at')
+    return render(request, "users/osago_list.html", {"policies": policies})
+
+
+def osago_create(request):
+    if not request.user.is_authenticated:
+        return redirect("auth")
+    form = OsagoPolicyForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        policy = form.save(commit=False)
+        policy.created_by = request.user
+        policy.save()
+        messages.success(request, "Полис ОСАГО сохранён.")
+        return redirect("osago_list")
+    return render(request, "users/osago_form.html", {"form": form, "title": "Новый полис ОСАГО"})
+
+
+def osago_edit(request, pk):
+    if not request.user.is_authenticated:
+        return redirect("auth")
+    from django.shortcuts import get_object_or_404
+    policy = get_object_or_404(OsagoPolicyModel, pk=pk, created_by=request.user)
+    form = OsagoPolicyForm(request.POST or None, instance=policy)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Полис обновлён.")
+        return redirect("osago_list")
+    return render(request, "users/osago_form.html", {"form": form, "title": "Редактирование полиса ОСАГО", "policy": policy})
+
+
+
+def dashboard_view(request):
+    if not request.user.is_authenticated:
+        return redirect("auth")
+    # TODO: ограничить доступ (is_staff) после окончания разработки
+
+    from django.db.models import Count, Sum, Q
+    from django.db.models.functions import TruncMonth
+    import json
+
+    # --- Сводные карточки ---
+    total_deals = Deal.objects.count()
+    closed_deals = Deal.objects.filter(status='closed').count()
+    in_progress_deals = Deal.objects.filter(status='in_progress').count()
+    total_amount = Deal.objects.filter(status='closed').aggregate(s=Sum('amount'))['s'] or 0
+
+    brokers_count = UserProfile.objects.filter(role='broker').count()
+    agents_count = UserProfile.objects.filter(role='agent').count()
+
+    # --- Статистика по пользователям (брокеры + агенты) ---
+    role_profiles = UserProfile.objects.filter(role__in=['broker', 'agent']).select_related('user')
+    user_stats = []
+    for profile in role_profiles:
+        user_deals = Deal.objects.filter(assigned_to=profile.user)
+        user_stats.append({
+            'profile': profile,
+            'total': user_deals.count(),
+            'closed': user_deals.filter(status='closed').count(),
+            'in_progress': user_deals.filter(status='in_progress').count(),
+            'cancelled': user_deals.filter(status='cancelled').count(),
+            'amount': user_deals.filter(status='closed').aggregate(s=Sum('amount'))['s'] or 0,
+        })
+    user_stats.sort(key=lambda x: x['closed'], reverse=True)
+
+    # --- Данные для графика по месяцам (последние 6 месяцев) ---
+    from datetime import date, timedelta
+    from django.utils import timezone
+    six_months_ago = timezone.now() - timedelta(days=182)
+    monthly_raw = (
+        Deal.objects
+        .filter(created_at__gte=six_months_ago)
+        .annotate(month=TruncMonth('created_at'))
+        .values('month')
+        .annotate(count=Count('id'))
+        .order_by('month')
+    )
+    chart_labels = [entry['month'].strftime('%b %Y') for entry in monthly_raw]
+    chart_data = [entry['count'] for entry in monthly_raw]
+
+    # --- Распределение статусов для пончика ---
+    status_counts = {s: Deal.objects.filter(status=s).count() for s, _ in Deal.STATUS_CHOICES}
+
+    # --- Последние 10 сделок ---
+    recent_deals = Deal.objects.select_related('assigned_to', 'assigned_to__userprofile').order_by('-created_at')[:10]
+
+    return render(request, "users/dashboard.html", {
+        "total_deals": total_deals,
+        "closed_deals": closed_deals,
+        "in_progress_deals": in_progress_deals,
+        "total_amount": total_amount,
+        "brokers_count": brokers_count,
+        "agents_count": agents_count,
+        "user_stats": user_stats,
+        "recent_deals": recent_deals,
+        "chart_labels": json.dumps(chart_labels, ensure_ascii=False),
+        "chart_data": json.dumps(chart_data),
+        "status_counts": json.dumps(status_counts),
+    })

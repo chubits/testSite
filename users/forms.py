@@ -1,20 +1,50 @@
 
 from django import forms
 from django.contrib.auth.models import User
+from .models import UserProfile
+
 # Форма для редактирования профиля пользователя
 class ProfileEditForm(forms.ModelForm):
+    last_name = forms.CharField(
+        required=False,
+        label="Фамилия",
+        max_length=100,
+        widget=forms.TextInput(attrs={"placeholder": "Фамилия"})
+    )
+    first_name = forms.CharField(
+        required=False,
+        label="Имя",
+        max_length=100,
+        widget=forms.TextInput(attrs={"placeholder": "Имя"})
+    )
+    middle_name = forms.CharField(
+        required=False,
+        label="Отчество",
+        max_length=100,
+        widget=forms.TextInput(attrs={"placeholder": "Отчество"})
+    )
     phone = forms.CharField(
-        required=True,
+        required=False,
         label="Телефон",
         max_length=20,
         widget=forms.TextInput(attrs={"placeholder": "+7 (___) ___-__-__"})
     )
+    role = forms.ChoiceField(
+        required=False,
+        label="Роль",
+        choices=UserProfile.ROLE_CHOICES,
+    )
+    avatar = forms.ImageField(
+        required=False,
+        label="Аватар",
+        widget=forms.FileInput(attrs={"accept": "image/*", "class": "avatar-file-input"}),
+    )
 
     class Meta:
         model = User
-        fields = ("username", "email", "phone")
+        fields = ("username", "email")
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user_profile=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["username"].label = "Логин"
         self.fields["username"].help_text = ""
@@ -25,8 +55,12 @@ class ProfileEditForm(forms.ModelForm):
         })
         self.fields["email"].label = "Электронная почта"
         self.fields["email"].widget.attrs.update({"placeholder": "Email"})
-        self.fields["phone"].label = "Телефон"
-        self.fields["phone"].widget.attrs.update({"placeholder": "+7 (___) ___-__-__"})
+        if user_profile:
+            self.fields["last_name"].initial = user_profile.last_name
+            self.fields["first_name"].initial = user_profile.first_name
+            self.fields["middle_name"].initial = user_profile.middle_name
+            self.fields["phone"].initial = user_profile.phone
+            self.fields["role"].initial = user_profile.role
 
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
@@ -130,3 +164,49 @@ class FeedbackForm(forms.ModelForm):
 # === ФОРМА ДЛЯ ВОССТАНОВЛЕНИЯ ПАРОЛЯ ===
 class PasswordResetRequestForm(forms.Form):
     email = forms.EmailField(label="Введите ваш email", max_length=254)
+
+
+# === ФОРМА ПОЛИСА ОСАГО ===
+from .models import OsagoPolicy
+
+class OsagoPolicyForm(forms.ModelForm):
+    class Meta:
+        model = OsagoPolicy
+        fields = [
+            # Страхователь
+            'insured_last_name', 'insured_first_name', 'insured_middle_name',
+            'insured_dob', 'insured_phone', 'insured_email',
+            # ТС
+            'vehicle_make', 'vehicle_model', 'vehicle_year',
+            'vehicle_vin', 'vehicle_plate', 'vehicle_category', 'engine_power',
+            # Полис
+            'drivers_type', 'policy_start', 'policy_end',
+            'insurer_name', 'premium_amount', 'policy_number',
+            'status', 'notes',
+        ]
+        widgets = {
+            'insured_last_name':   forms.TextInput(attrs={'placeholder': 'Фамилия'}),
+            'insured_first_name':  forms.TextInput(attrs={'placeholder': 'Имя'}),
+            'insured_middle_name': forms.TextInput(attrs={'placeholder': 'Отчество'}),
+            'insured_dob':         forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+            'insured_phone':       forms.TextInput(attrs={'placeholder': '+7 (___) ___-__-__'}),
+            'insured_email':       forms.EmailInput(attrs={'placeholder': 'Email'}),
+            'vehicle_make':        forms.TextInput(attrs={'placeholder': 'Toyota, Kia, Lada…'}),
+            'vehicle_model':       forms.TextInput(attrs={'placeholder': 'Camry, Rio, Vesta…'}),
+            'vehicle_year':        forms.NumberInput(attrs={'placeholder': '2020', 'min': 1900, 'max': 2100}),
+            'vehicle_vin':         forms.TextInput(attrs={'placeholder': 'JTDKB20U003XXXXXX', 'maxlength': 20}),
+            'vehicle_plate':       forms.TextInput(attrs={'placeholder': 'А123ВС77', 'maxlength': 20}),
+            'engine_power':        forms.NumberInput(attrs={'placeholder': 'л.с.', 'min': 1}),
+            'policy_start':        forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+            'policy_end':          forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+            'insurer_name':        forms.TextInput(attrs={'placeholder': 'Название страховой компании'}),
+            'premium_amount':      forms.NumberInput(attrs={'placeholder': '0.00', 'step': '0.01'}),
+            'policy_number':       forms.TextInput(attrs={'placeholder': 'ААА 1234567890'}),
+            'notes':               forms.Textarea(attrs={'rows': 3, 'placeholder': 'Дополнительные сведения…'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.required = False
+        self.fields['status'].required = True

@@ -1,0 +1,153 @@
+{% extends 'users/base.html' %}
+
+{% block title %}{{ title }} — KOSAGO.RU{% endblock %}
+
+{% block main_content_class %}main-bg__content--profile{% endblock %}
+
+{% block body %}
+<div class="container container--wide profile-container">
+
+    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap;">
+        <a href="{% url 'osago_list' %}" class="osago-back-link">← Все полисы</a>
+        <h1 style="margin:0;">{{ title }}</h1>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="messages {% if message.tags == 'success' %}success{% else %}error{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" class="osago-form" novalidate>
+        {% csrf_token %}
+
+        <!-- Блок 1: Страхователь -->
+        <fieldset class="osago-fieldset">
+            <legend class="osago-legend">Страхователь</legend>
+            <div class="osago-grid osago-grid--3">
+                <div class="osago-field">
+                    <label>{{ form.insured_last_name.label }}</label>
+                    {{ form.insured_last_name }}
+                    {% if form.insured_last_name.errors %}<span class="osago-field-error">{{ form.insured_last_name.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="osago-field">
+                    <label>{{ form.insured_first_name.label }}</label>
+                    {{ form.insured_first_name }}
+                    {% if form.insured_first_name.errors %}<span class="osago-field-error">{{ form.insured_first_name.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="osago-field">
+                    <label>{{ form.insured_middle_name.label }}</label>
+                    {{ form.insured_middle_name }}
+                    {% if form.insured_middle_name.errors %}<span class="osago-field-error">{{ form.insured_middle_name.errors|join:", " }}</span>{% endif %}
+                </div>
+            </div>
+            <div class="osago-grid osago-grid--3">
+                <div class="osago-field">
+                    <label>{{ form.insured_dob.label }}</label>
+                    {{ form.insured_dob }}
+                    {% if form.insured_dob.errors %}<span class="osago-field-error">{{ form.insured_dob.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="osago-field">
+                    <label>{{ form.insured_phone.label }}</label>
+                    {{ form.insured_phone }}
+                    {% if form.insured_phone.errors %}<span class="osago-field-error">{{ form.insured_phone.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="osago-field">
+                    <label>{{ form.insured_email.label }}</label>
+                    {{ form.insured_email }}
+                    {% if form.insured_email.errors %}<span class="osago-field-error">{{ form.insured_email.errors|join:", " }}</span>{% endif %}
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- Блок 2: Транспортное средство -->
+        <fieldset class="osago-fieldset">
+            <legend class="osago-legend">Транспортное средство</legend>
+            <div class="osago-grid osago-grid--3">
+                <div class="osago-field">
+                    <label>{{ form.vehicle_make.label }}</label>
+                    {{ form.vehicle_make }}
+                </div>
+                <div class="osago-field">
+                    <label>{{ form.vehicle_model.label }}</label>
+                    {{ form.vehicle_model }}
+                </div>
+                <div class="osago-field">
+                    <label>{{ form.vehicle_year.label }}</label>
+                    {{ form.vehicle_year }}
+                </div>
+            </div>
+            <div class="osago-grid osago-grid--4">
+                <div class="osago-field">
+                    <label>{{ form.vehicle_vin.label }}</label>
+                    {{ form.vehicle_vin }}
+                </div>
+                <div class="osago-field">
+                    <label>{{ form.vehicle_plate.label }}</label>
+                    {{ form.vehicle_plate }}
+                </div>
+                <div class="osago-field">
+                    <label>{{ form.vehicle_category.label }}</label>
+                    {{ form.vehicle_category }}
+                </div>
+                <div class="osago-field">
+                    <label>{{ form.engine_power.label }}</label>
+                    {{ form.engine_power }}
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- Блок 3: Параметры полиса -->
+        <fieldset class="osago-fieldset">
+            <legend class="osago-legend">Параметры полиса</legend>
+            <div class="osago-grid osago-grid--3">
+                <div class="osago-field">
+                    <label>{{ form.policy_start.label }}</label>
+                    {{ form.policy_start }}
+                </div>
+                <div class="osago-field">
+                    <label>{{ form.policy_end.label }}</label>
+                    {{ form.policy_end }}
+                </div>
+                <div class="osago-field">
+                    <label>{{ form.drivers_type.label }}</label>
+                    {{ form.drivers_type }}
+                </div>
+            </div>
+            <div class="osago-grid osago-grid--3">
+                <div class="osago-field">
+                    <label>{{ form.insurer_name.label }}</label>
+                    {{ form.insurer_name }}
+                </div>
+                <div class="osago-field">
+                    <label>{{ form.premium_amount.label }}</label>
+                    {{ form.premium_amount }}
+                </div>
+                <div class="osago-field">
+                    <label>{{ form.policy_number.label }}</label>
+                    {{ form.policy_number }}
+                </div>
+            </div>
+            <div class="osago-grid osago-grid--2">
+                <div class="osago-field">
+                    <label>{{ form.status.label }}</label>
+                    {{ form.status }}
+                    {% if form.status.errors %}<span class="osago-field-error">{{ form.status.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="osago-field">
+                    <label>{{ form.notes.label }}</label>
+                    {{ form.notes }}
+                </div>
+            </div>
+        </fieldset>
+
+        <div class="osago-actions">
+            <button type="submit" class="osago-btn-primary">Сохранить полис</button>
+            <a href="{% url 'osago_list' %}" class="osago-btn-secondary">Отмена</a>
+        </div>
+
+    </form>
+</div>
+{% endblock %}

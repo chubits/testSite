@@ -169,6 +169,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
 
 LOGIN_REDIRECT_URL = "/profile/"  # куда отправлять после входа
 LOGOUT_REDIRECT_URL = "/"  # после выхода — на главную
