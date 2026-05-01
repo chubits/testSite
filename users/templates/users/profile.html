@@ -73,6 +73,7 @@
                             {{ profile_form.avatar }}
                         </label>
                     </div>
+                    <div style="margin-top:6px;font-size:0.8rem;color:#666;">PNG, JPG, WEBP до 5 МБ.</div>
                     {% if profile_form.avatar.errors %}<span style="color:#c62828;font-size:0.82rem;">{{ profile_form.avatar.errors|join:", " }}</span>{% endif %}
                 </div>
                 {% for field in profile_form %}

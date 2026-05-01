@@ -3,6 +3,9 @@ from django import forms
 from django.contrib.auth.models import User
 from .models import UserProfile
 
+
+MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024
+
 # Форма для редактирования профиля пользователя
 class ProfileEditForm(forms.ModelForm):
     last_name = forms.CharField(
@@ -61,6 +64,12 @@ class ProfileEditForm(forms.ModelForm):
             self.fields["middle_name"].initial = user_profile.middle_name
             self.fields["phone"].initial = user_profile.phone
             self.fields["role"].initial = user_profile.role
+
+    def clean_avatar(self):
+        avatar = self.cleaned_data.get("avatar")
+        if avatar and avatar.size > MAX_AVATAR_SIZE_BYTES:
+            raise forms.ValidationError("Размер аватара не должен превышать 5 МБ.")
+        return avatar
 
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
