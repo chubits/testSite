@@ -99,6 +99,101 @@ http://127.0.0.1:8000/
 - `/profile/` — профиль пользователя и форма обратной связи
 - `/admin/` — административная панель Django
 
+## Автодеплой на VPS после `git push`
+
+В репозиторий добавлен workflow [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml), который:
+
+- запускается при `push` в ветку `main` и вручную через `workflow_dispatch`;
+- сначала прогоняет `python manage.py test`;
+- затем подключается к VPS по SSH и запускает [`scripts/deploy.sh`](scripts/deploy.sh).
+
+Что делает deploy-скрипт на сервере:
+
+- забирает свежие изменения из ветки `main`;
+- обновляет зависимости из `requirements.txt`;
+- применяет миграции;
+- собирает статику;
+- выполняет `python manage.py check --deploy`;
+- перезапускает systemd-сервис приложения и при необходимости делает reload nginx.
+
+### 1. Что нужно подготовить на VPS один раз
+
+1. Установите проект на сервер, например в `/var/www/testSite`:
+
+```bash
+git clone https://github.com/chubits/testSite.git /var/www/testSite
+cd /var/www/testSite
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+python manage.py migrate
+python manage.py collectstatic --noinput
+```
+
+2. Заполните `.env` продакшен-значениями, минимум:
+
+- `SECRET_KEY`
+- `DEBUG=False`
+- `ALLOWED_HOSTS=ваш-домен,IP`
+- SMTP-переменные при использовании отправки почты
+
+3. Убедитесь, что приложение запускается через `systemd` и вы знаете имя сервиса, например `testsite` или `gunicorn`.
+
+Пример проверки:
+
+```bash
+sudo systemctl status testsite
+sudo systemctl status nginx
+```
+
+4. Разрешите deploy-пользователю выполнять перезапуск сервиса через `sudo` без пароля. Пример для пользователя `deploy`:
+
+```bash
+sudo visudo -f /etc/sudoers.d/testsite-deploy
+```
+
+И добавьте строку:
+
+```text
+deploy ALL=NOPASSWD:/bin/systemctl restart testsite,/bin/systemctl reload nginx
+```
+
+Если имя сервиса другое, подставьте своё.
+
+### 2. Какие GitHub Secrets добавить
+
+В репозитории GitHub откройте `Settings -> Secrets and variables -> Actions` и создайте секреты:
+
+- `DEPLOY_HOST` — IP-адрес или домен VPS
+- `DEPLOY_PORT` — SSH-порт, обычно `22`
+- `DEPLOY_USER` — пользователь для SSH, например `deploy`
+- `DEPLOY_SSH_KEY` — приватный SSH-ключ этого пользователя
+- `DEPLOY_PATH` — путь к проекту на сервере, например `/var/www/testSite`
+- `DEPLOY_VENV_PATH` — путь к виртуальному окружению, например `/var/www/testSite/venv`
+- `APP_SERVICE` — systemd-сервис приложения, например `testsite`
+- `NGINX_SERVICE` — обычно `nginx`; можно оставить пустым, если reload не нужен
+- `DEPLOY_KNOWN_HOSTS` — опционально, вывод `ssh-keyscan -H your-host`
+- `DJANGO_COLLECTSTATIC` — опционально, `1` или `0`
+- `DJANGO_RUN_DEPLOY_CHECK` — опционально, `1` или `0`
+
+### 3. Как это работает после настройки
+
+После обычного:
+
+```bash
+git push origin main
+```
+
+GitHub Actions автоматически:
+
+1. прогонит тесты;
+2. подключится к VPS;
+3. выполнит deploy-скрипт;
+4. перезапустит приложение.
+
+Если нужен ручной запуск без нового коммита, используйте `Actions -> Deploy to VPS -> Run workflow`.
+
 ## Настройка SMTP
 
 Для доменной почты на Jino используйте такие параметры:
